@@ -1,30 +1,42 @@
 apply plugin: 'java'
-apply plugin: 'groovy'
 apply plugin: 'maven'
 
 group = 'com.componentix'
-version = '1.0-SNAPSHOT'
-sourceCompatibility = "1.6"
-targetCompatibility = "1.6"
+version = '0.2'
+sourceCompatibility = "1.7"
+targetCompatibility = "1.7"
 
 description = """Ukrainian stemmer plugin for ElasticSearch"""
 
 repositories {
     mavenLocal()
-    mavenRepo url: "https://oss.sonatype.org/content/repositories/releases"
-    mavenRepo url: "https://oss.sonatype.org/content/repositories/snapshots"
-    mavenRepo url: "http://repo.maven.apache.org/maven2"
+    maven {
+        url "https://oss.sonatype.org/content/repositories/releases"
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+        url "http://repo.maven.apache.org/maven2"
+    }
+    flatDir {
+        dirs '../ukrainian-stemmer/build/libs'
+    }
 }
+
 
 dependencies {
-    compile group: 'org.elasticsearch', name: 'elasticsearch', version:'1.4.5'
-    compile group: 'com.componentix', name: 'ukrainian-stemmer', version:'1.0-SNAPSHOT'
+    compile group: 'org.elasticsearch', name: 'elasticsearch', version:'2.3.3'
+    compile group: 'com.componentix', name: 'ukrainian-stemmer', version:'0.2'
+    compile 'org.codehaus.groovy:groovy-all:2.4.6'
 }
 
 
-explodedDistDir = new File(distsDir, 'exploded')
+File explodedDistDir = new File(distsDir, 'exploded')
 
-manifest.mainAttributes("Implementation-Title": "ElasticSearch::Plugins::Analysis::UkrainianStemmer", "Implementation-Version": rootProject.version, "Implementation-Date": new Date().format("yyyy-MM-dd HH:mm:ss"))
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'ElasticSearch::Plugins::Analysis::UkrainianStemmer',
+                   'Implementation-Version': rootProject.version,
+                   'Implementation-Date': new Date().format("yyyy-MM-dd HH:mm:ss")
+    }
+}
 
 task explodedDist(dependsOn: [jar], description: 'Builds the plugin zip file') << {
     [explodedDistDir]*.mkdirs()
@@ -32,28 +44,24 @@ task explodedDist(dependsOn: [jar], description: 'Builds the plugin zip file') <
     copy {
         from configurations.compile
         into explodedDistDir
+        include "ukrainian-stemmer-*"
+        include "elasticsearch-ukrainian-stemmer-*"
+        include "groovy-*"
     }
-
-    ant.delete { fileset(dir: explodedDistDir, includes: "elasticsearch-*.jar") }
 
     copy {
         from libsDir
         into explodedDistDir
     }
 
-    ant.delete { fileset(dir: explodedDistDir, includes: "lucene-*.jar") }
-    ant.delete { fileset(dir: explodedDistDir, includes: "spatial4j-*.jar") }
+    copy {
+        from "$rootDir/extra"
+        into explodedDistDir
+    }
 }
 
 task zip(type: Zip, dependsOn: ['explodedDist']) {
     from(explodedDistDir) {
-    }
-}
-
-task release(dependsOn: [zip]) << {
-    ant.delete(dir: explodedDistDir)
-    copy {
-        from distsDir
-        into(new File(rootProject.distsDir, "plugins"))
+        include '*'
     }
 }

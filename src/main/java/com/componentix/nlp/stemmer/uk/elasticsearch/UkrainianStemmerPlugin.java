@@ -1,9 +1,9 @@
 package com.componentix.nlp.stemmer.uk.elasticsearch;
 
 import org.elasticsearch.index.analysis.AnalysisModule;
-import org.elasticsearch.plugins.AbstractPlugin;
+import org.elasticsearch.plugins.Plugin;
 
-public class UkrainianStemmerPlugin extends AbstractPlugin {
+public class UkrainianStemmerPlugin extends Plugin {
 
     @Override
     public String name() {
